@@ -1,5 +1,7 @@
+flask
 more-itertools
 jupyter
 numpy
 pandas
 pendulum
+pytest
