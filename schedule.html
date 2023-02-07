@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <meta charset="utf-8">
+	    <title>Tournament Scheduler</title>
+	</head>
+	<body>	
+		<form action="http://127.0.0.1:5000/schedule" method="post" target="_blank">
+
+			<p>Number of teams: <input type="number" name="teams"></p>
+
+			<p>Enter time windows for games. Multiple time windows can be provided, one per line, with start and end times
+				separated by commas. Include both dates and times.</p>
+	        <textarea rows="3", cols="60" name="times"></textarea>
+
+			<p>Minutes per game: <input type="number" name="minutes" value="30"></p>
+	        
+			<p><input type="submit" value="submit"></p>
+		</form>	
+	</body>
+</html>
