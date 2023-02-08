@@ -1,9 +1,9 @@
-import pdb
-import traceback
+import os
 from typing import List, Optional, Sequence
 
 from flask import Flask, request, url_for
 import pandas as pd
+from time import sleep
 
 from tourney.time_utils import as_time, get_available_times, TimeWindow
 from tourney.tournament import Tournament
@@ -20,7 +20,6 @@ def root():
 
 @app.route("/schedule", methods=["POST"])
 def schedule() -> str:
-    # pdb.set_trace()
     teams = int(request.form["teams"])
     windows = _get_time_windows(request.form["times"])
     minutes = int(request.form["minutes"])
@@ -82,4 +81,5 @@ def _split_into_windows(tournament_df: pd.DataFrame, windows: Sequence[TimeWindo
 
 
 if __name__ == "__main__":
+    os.system("open schedule.html")  # Comment this out to turn off automatic opening of scheduling web form
     app.run(debug=True)
