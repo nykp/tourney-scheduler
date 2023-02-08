@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from datetime import datetime
 from itertools import repeat
 from math import floor, log2
 from typing import List, NamedTuple, Optional, Sequence, Union
@@ -7,16 +6,17 @@ from typing import List, NamedTuple, Optional, Sequence, Union
 import pandas as pd
 import pendulum
 
+from .elimination.scheduler import get_seeded_schedule
 from .match import Match, MatchSeries, Team
 from .match_utils import get_teams, Matches, TeamsOrNumber
-from .round_robin.scheduler import get_priority_schedule
-from .elimination.scheduler import get_seeded_schedule
 from .referees import get_ref_schedule, get_scoreboard_schedule
+from .round_robin.scheduler import get_priority_schedule
+from .time_utils import TimeDateTime, TimeLike
 
 
 class Game(NamedTuple):
     game: int
-    time: datetime
+    time: TimeDateTime
     match: Match
     referee: Optional[Team] = None
     scoreboard: Optional[Team] = None
@@ -59,7 +59,7 @@ class Tournament:
     def create(
         cls,
         matches: Matches,
-        times: Sequence[Union[str, datetime]],
+        times: Sequence[TimeLike],
         referees: Optional[Sequence[Team]] = None,
         scoreboard: Optional[Sequence[Team]] = None,
     ) -> "Tournament":
@@ -95,7 +95,7 @@ class Tournament:
     def schedule_round_robin(
         cls,
         teams: TeamsOrNumber,
-        times: Sequence[Union[str, datetime]],
+        times: Sequence[TimeLike],
         with_referees=True,
         with_scoreboard=True,
         num_candidates=5,
@@ -115,7 +115,7 @@ class Tournament:
     def schedule_elimination(
         cls,
         teams: TeamsOrNumber,
-        times: Sequence[Union[str, datetime]],
+        times: Sequence[TimeLike],
         with_referees=True,
         with_scoreboard=True,
         ranks: Optional[Union[Sequence[int], str]] = None,
@@ -136,9 +136,9 @@ class Tournament:
     def schedule_round_robin_with_playoffs(
         cls,
         teams: TeamsOrNumber,
-        times: Sequence[Union[str, datetime]],
+        times: Sequence[TimeLike],
         playoff_teams: Optional[int] = None,
-        playoff_times: Optional[Sequence[Union[str, datetime]]] = None,
+        playoff_times: Optional[Sequence[TimeLike]] = None,
         with_referees=True,
         with_scoreboard=True,
         num_candidates=5,

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, time, timedelta
 from pytz import UTC
 from typing import List, Sequence, Union
 
@@ -6,19 +6,33 @@ import pendulum
 from pendulum.period import Period
 
 
-TimeLike = Union[str, datetime]
+TimeLike = Union[datetime, str, time]
+TimeDateTime = Union[datetime, time]
 
 
-def as_datetime(t: TimeLike) -> datetime:
+def as_time(t: TimeLike) -> TimeDateTime:
     if isinstance(t, str):
-        return pendulum.parse(t)
-    elif not isinstance(t, datetime):
-        raise TypeError("Argument must be pendulum-parsable string or a datetime instance")
-    else:
+        if t.lower().endswith("am"):
+            tmp = pendulum.parse(t[:-2].strip(), exact=True)
+            if tmp.hour == 12:
+                tmp -= timedelta(hours=12)
+            return tmp
+        elif t.lower().endswith("pm"):
+            tmp = pendulum.parse(t[:-2].strip(), exact=True)
+            if tmp.hour == 12:
+                tmp -= timedelta(hours=12)
+            return tmp + timedelta(hours=12)
+        else:
+            return pendulum.parse(t, exact=True)
+    elif isinstance(t, datetime):
         if not t.tzinfo:
             return t.replace(tzinfo=UTC)
         else:
             return t
+    elif isinstance(t, time):
+        return t
+    else:
+        raise TypeError("Argument must be pendulum-parsable string or a datetime instance")
 
 
 class TimeWindow:
@@ -29,15 +43,20 @@ class TimeWindow:
                 self.start = arg.start
                 self.end = arg.end
             else:
-                start, end = arg
-                self.start = as_datetime(start)
-                self.end = as_datetime(end)
+                try:
+                    start, end = arg
+                except (TypeError, ValueError):
+                    raise TypeError("If single argument is used, it must be a period or (start, end) pair.")
+                self.start = as_time(start)
+                self.end = as_time(end)
         elif len(args) == 2:
             start, end = args
+            start = as_time(start)
+            end = as_time(end)
             if start > end:
-                raise ValueError("start is after end")
-            self.start = as_datetime(start)
-            self.end = as_datetime(end)
+                raise ValueError("start is after end. If times are correct, you may need to include the dates.")
+            self.start = start
+            self.end = end
         else:
             raise ValueError("Unexpected number of arguments; should be single period arg or two datetime args")
 
@@ -67,6 +86,12 @@ class TimeWindow:
     def __eq__(self, other: "TimeWindow") -> bool:
         return self.start == other.start and self.end == other.end
 
+    def __str__(self) -> str:
+        return f"{type(self).__name__}({self.start} --> {self.end})"
+
+    def __repr__(self) -> str:
+        return str(self)
+
 
 TimeWindowLike = Union[TimeWindow, Period, Sequence[TimeLike]]
 
@@ -74,7 +99,7 @@ TimeWindowLike = Union[TimeWindow, Period, Sequence[TimeLike]]
 def get_available_times(
     time_windows: Union[TimeWindowLike, Sequence[TimeWindowLike]],
     minutes_per_game: int = 30,
-) -> List[datetime]:
+) -> List[TimeDateTime]:
     try:
         time_windows = [TimeWindow(time_windows)]
     except TypeError:
