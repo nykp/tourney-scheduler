@@ -8,7 +8,6 @@ from flask import Flask, request, url_for
 from tourney.time_utils import get_available_times, TimeWindow
 from tourney.tournament import Tournament
 
-
 app = Flask(__name__)
 
 
@@ -86,9 +85,5 @@ def _split_into_windows(tournament_df: pd.DataFrame, windows: Sequence[TimeWindo
 @click.option('--open/--no-open', 'open_page', default=True, help='Automatically open scheduling page in browser.')
 def run(open_page: bool):
     if open_page:
-        os.system("open schedule.html")  # Comment this out to turn off automatic opening of scheduling web form
+        os.system("open src/schedule.html")  # Comment this out to turn off automatic opening of scheduling web form
     app.run(debug=True)
-
-
-if __name__ == "__main__":
-    run()
