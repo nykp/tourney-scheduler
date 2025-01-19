@@ -1,11 +1,11 @@
 import os
 from typing import List, Optional, Sequence
 
-from flask import Flask, request, url_for
+import click
 import pandas as pd
-from time import sleep
+from flask import Flask, request, url_for
 
-from tourney.time_utils import as_time, get_available_times, TimeWindow
+from tourney.time_utils import get_available_times, TimeWindow
 from tourney.tournament import Tournament
 
 
@@ -31,6 +31,8 @@ def schedule() -> str:
     for df in window_dfs:
         tournament_html += df.to_html(index=False)
         tournament_html += "<br><br>"
+    tournament_html += tournament.summary().to_html(index=True)
+    tournament_html += "<br><br>"
     return tournament_html
 
 
@@ -80,6 +82,13 @@ def _split_into_windows(tournament_df: pd.DataFrame, windows: Sequence[TimeWindo
     return splits
 
 
-if __name__ == "__main__":
-    os.system("open schedule.html")  # Comment this out to turn off automatic opening of scheduling web form
+@click.command()
+@click.option('--open/--no-open', 'open_page', default=True, help='Automatically open scheduling page in browser.')
+def run(open_page: bool):
+    if open_page:
+        os.system("open schedule.html")  # Comment this out to turn off automatic opening of scheduling web form
     app.run(debug=True)
+
+
+if __name__ == "__main__":
+    run()
