@@ -1,9 +1,10 @@
+import re
 from datetime import datetime, time, timedelta
 from pytz import UTC
 from typing import List, Sequence, Union
 
 import pendulum
-from pendulum.period import Period
+from pendulum import Interval
 
 
 TimeLike = Union[datetime, str, time]
@@ -12,18 +13,11 @@ TimeDateTime = Union[datetime, time]
 
 def as_time(t: TimeLike) -> TimeDateTime:
     if isinstance(t, str):
-        if t.lower().endswith("am"):
-            tmp = pendulum.parse(t[:-2].strip(), exact=True)
-            if tmp.hour == 12:
-                tmp -= timedelta(hours=12)
-            return tmp
-        elif t.lower().endswith("pm"):
-            tmp = pendulum.parse(t[:-2].strip(), exact=True)
-            if tmp.hour == 12:
-                tmp -= timedelta(hours=12)
-            return tmp + timedelta(hours=12)
+        dt = pendulum.parse(t, strict=False, exact=True)
+        if not isinstance(dt, time) and len(t) <= 10:
+            return dt.time()
         else:
-            return pendulum.parse(t, exact=True)
+            return dt
     elif isinstance(t, datetime):
         if not t.tzinfo:
             return t.replace(tzinfo=UTC)
@@ -39,7 +33,7 @@ class TimeWindow:
     def __init__(self, *args: Union[TimeLike, Sequence[TimeLike], "TimeWindowLike"]):
         if len(args) == 1:
             arg = args[0]
-            if isinstance(arg, Period):
+            if isinstance(arg, Interval):
                 self.start = arg.start
                 self.end = arg.end
             else:
@@ -93,7 +87,7 @@ class TimeWindow:
         return str(self)
 
 
-TimeWindowLike = Union[TimeWindow, Period, Sequence[TimeLike]]
+TimeWindowLike = Union[TimeWindow, Interval, Sequence[TimeLike]]
 
 
 def get_available_times(

@@ -15,18 +15,21 @@ def test_as_time():
     assert t2 > t1
     assert t3 < t1
 
-    with pytest.raises(ParserError):
-        as_time("12:34:56-05:00")
-
     # datetimes
-    dt1s = "2023-01-01 12:34:56"
+    dt1s = "2023-01-01 12:34"
     dt2s = "2023-01-01 12:34:56-05:00"
     dt1 = as_time(dt1s)
     dt2 = as_time(dt2s)
     assert dt2 > dt1
 
+    dt2s = "2023-01-01 12:34-05:00"
+    dt1s = "2023-01-01 12:34:56"
+    dt1 = as_time(dt1s)
+    dt2 = as_time(dt2s)
+    assert dt2 > dt1
+
     # AM/PM
-    assert (as_time("12:34pm") - as_time("12:34am")).total_minutes() == 12 * 60
+    assert (as_time("12:34pm") - as_time("12:34:00am")).total_minutes() == 12 * 60
 
 
 def test_TimeWindow():
