@@ -1,6 +1,5 @@
 from datetime import timedelta
 
-from pendulum.parsing.exceptions import ParserError
 import pytest
 
 from tourney.time_utils import as_time, get_available_times, TimeWindow

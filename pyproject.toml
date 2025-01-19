@@ -4,12 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tourney"
-version = "0.0.1"
+version = "0.0.2"
 authors = [
     {name = "Erik Schomburg", email = "eschomburg@gmail.com"},
 ]
 description = ""
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [
     "more-itertools",
     "numpy",
@@ -24,4 +24,5 @@ jupyter = ["jupyter"]
 exclude = ["notebooks", "tests"]
 
 [tool.pytest.ini_options]
-pythonpath = ["."]
+pythonpath = ["src"]
+testpaths = ["tests"]
