@@ -1,13 +1,19 @@
 from collections import defaultdict
+from datetime import datetime
 from itertools import cycle
 from random import seed as set_seed, shuffle
-from typing import Any, Dict, List, Sequence, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from .match import Team
 from .match_utils import Matches
 
 
-def get_ref_schedule(teams: Sequence[Team], matches: Matches, seed=None) -> Tuple[List[Team], Dict[Team, int]]:
+def get_ref_schedule(
+        teams: Sequence[Team],
+        matches: Matches,
+        times: Optional[Sequence[datetime]] = None,
+        seed=None
+) -> Tuple[List[Team], Dict[Team, int]]:
     if len(teams) < 3:
         raise ValueError("Too few teams to have referees")
     if seed is not None:
@@ -25,8 +31,15 @@ def get_ref_schedule(teams: Sequence[Team], matches: Matches, seed=None) -> Tupl
     while len(schedule) < len(matches):
         candidate = next(sorted_candidates)
         current_idx = len(schedule)
-        if candidate in matches[current_idx]:
+        current_match = matches[current_idx]
+        current_time = times[current_idx] if times else None
+        next_match = matches[current_idx + 1] if current_idx < len(matches) - 1 else None
+        next_time = times[current_idx + 1] if times and (current_idx < len(matches) - 1) else None
+        if candidate in current_match:
             continue
+        elif next_match and len(teams) > 4 and candidate in next_match:
+            if next_time and (next_time.date() == current_time.date()):
+                continue
         else:
             schedule.append(candidate)
             counts[candidate] += 1

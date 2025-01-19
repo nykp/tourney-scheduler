@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import dataclass
 from itertools import repeat
 from math import floor, log2
@@ -24,6 +25,7 @@ class Game(NamedTuple):
 
 @dataclass
 class Tournament:
+    teams: Sequence[Team]
     games: Sequence[Game]
 
     @staticmethod
@@ -58,6 +60,7 @@ class Tournament:
     @classmethod
     def create(
         cls,
+        teams: Sequence[Team],
         matches: Matches,
         times: Sequence[TimeLike],
         referees: Optional[Sequence[Team]] = None,
@@ -89,7 +92,7 @@ class Tournament:
                 time = pendulum.parse(time)
             game_id = match.id if match.id is not None else i + 1
             games.append(Game(game_id, time, match, ref, score))
-        return cls(games)
+        return cls(teams, games)
 
     @classmethod
     def schedule_round_robin(
@@ -97,7 +100,7 @@ class Tournament:
         teams: TeamsOrNumber,
         times: Sequence[TimeLike],
         with_referees=True,
-        with_scoreboard=True,
+        with_scoreboard=False,
         num_candidates=5,
         rng_seed=None,
     ) -> "Tournament":
@@ -109,7 +112,7 @@ class Tournament:
             referees, _ = get_ref_schedule(teams, matches)
             if with_scoreboard:
                 scoreboards, _ = get_scoreboard_schedule(teams, matches, referees)
-        return cls.create(matches=matches, times=times, referees=referees, scoreboard=scoreboards)
+        return cls.create(teams=teams, matches=matches, times=times, referees=referees, scoreboard=scoreboards)
 
     @classmethod
     def schedule_elimination(
@@ -130,7 +133,7 @@ class Tournament:
             referees, _ = get_ref_schedule(teams, matches)
             if with_scoreboard:
                 scoreboards, _ = get_scoreboard_schedule(teams, matches, referees)
-        return cls.create(matches=matches, times=times, referees=referees, scoreboard=scoreboards)
+        return cls.create(teams=teams, matches=matches, times=times, referees=referees, scoreboard=scoreboards)
 
     @classmethod
     def schedule_round_robin_with_playoffs(
@@ -140,7 +143,7 @@ class Tournament:
         playoff_teams: Optional[int] = None,
         playoff_times: Optional[Sequence[TimeLike]] = None,
         with_referees=True,
-        with_scoreboard=True,
+        with_scoreboard=False,
         num_candidates=5,
         rng_seed=None,
     ) -> "Tournament":
@@ -166,14 +169,14 @@ class Tournament:
             game_number_start=(len(round_robin) + 1),
             rng_seed=rng_seed,
         )
-        return cls(round_robin.games + elimination.games)
+        return cls(teams, list(round_robin.games) + list(elimination.games))
 
     def to_dataframe(self) -> pd.DataFrame:
         df = pd.DataFrame([game._asdict() for game in self.games])
         return df.dropna(axis=1, how="all")
 
     def summary(self) -> pd.DataFrame:
-        summary = {team: {"games": 0, "referees": 0, "scoreboards": 0} for team in self.teams}
+        summary = defaultdict(lambda: defaultdict(int))
         for game in self:
             summary[game.match.home]["games"] += 1
             summary[game.match.away]["games"] += 1
@@ -182,10 +185,6 @@ class Tournament:
             if game.scoreboard:
                 summary[game.referee]["scoreboards"] += 1
         return pd.DataFrame.from_dict(summary, orient="index")
-
-    @property
-    def teams(self) -> List[Team]:
-        return sorted(set([t for g in self for t in g.match]))
 
     @property
     def matches(self) -> MatchSeries:
@@ -202,8 +201,7 @@ class Tournament:
 
     def __str__(self) -> str:
         dates = sorted(set([g.time.strftime("%Y-%m-%d") for g in self]))
-        teams = self.teams
-        return f"{type(self).__name__}({len(self)} games, {len(teams)} teams: {teams}, dates: {dates})"
+        return f"{type(self).__name__}({len(self)} games, {len(self.teams)} teams: {self.teams}, dates: {dates})"
 
     def __repr__(self):
         return str(self)
